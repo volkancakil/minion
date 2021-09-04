@@ -4,6 +4,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
+use std::ops::Deref;
 
 pub enum LoopState {
     Continue,
@@ -43,15 +44,41 @@ pub trait Cancellable {
             })
         };
         Handle {
-            keep_running,
+            canceller: Canceller { keep_running },
             executor: join_handle,
         }
     }
 }
 
 pub struct Handle<E> {
-    keep_running: Arc<AtomicBool>,
+    canceller: Canceller,
     executor: thread::JoinHandle<Result<(), E>>,
+}
+
+impl<E> Handle<E> {
+    pub fn canceller(&self) -> Canceller {
+        Canceller {
+            keep_running: self.keep_running.clone(),
+        }
+    }
+    
+    pub fn wait(self) -> Result<(), E> {
+        match self.executor.join() {
+            Ok(r) => r,
+            Err(e) => {
+                // Propagate the panic
+                panic!(e)
+            }
+        }
+    }
+}
+
+impl<E> Deref for Handle<E> {
+    type Target = Canceller;
+
+    fn deref(&self) -> &Self::Target {
+        &self.canceller
+    }
 }
 
 #[derive(Clone)]
@@ -65,22 +92,4 @@ impl Canceller {
     }
 }
 
-impl<E> Handle<E> {
-    pub fn canceller(&self) -> Canceller {
-        Canceller {
-            keep_running: self.keep_running.clone(),
-        }
-    }
-    pub fn cancel(&self) {
-        self.keep_running.store(false, Ordering::SeqCst);
-    }
-    pub fn wait(self) -> Result<(), E> {
-        match self.executor.join() {
-            Ok(r) => r,
-            Err(e) => {
-                // Propagate the panic
-                panic!(e)
-            }
-        }
-    }
-}
+
