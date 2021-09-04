@@ -2,6 +2,21 @@
 name = "minion"
 version = "0.1.0"
 edition = "2018"
+authors = ["Volkan Cakil <volkancakil@gmail.com>"]
+
+description = "Crate for managing cancelleble services"
+readme = "README.md"
+
+homepage = "https://github.com/volkancakil/minion"
+repository = "https://github.com/volkancakil/minion.git"
+
+keywords = ["crate", "service", "cancellable", "cancel"]
+categories = ["network-programming", "rust-patterns"]
+
+license = "MIT/Apache-2.0"
+
+[badges]
+travis-ci = { repository = "volkancakil/minion" }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
